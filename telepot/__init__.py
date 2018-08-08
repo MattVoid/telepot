@@ -490,13 +490,14 @@ class Bot(_BotBase):
     def _api_request(self, method, params=None, files=None, **kwargs):
         return api.request((self._token, method, params, files), **kwargs)
 
-    def _api_request_with_file(self, method, params, file_key, file_value, **kwargs):
-        if _isstring(file_value):
-            params[file_key] = file_value
-            return self._api_request(method, _rectify(params), **kwargs)
-        else:
-            files = {file_key: file_value}
+    def _api_request_with_file(self, method, params, files_key, files, **kwargs):
+        if _isstring(files[files_key]):
+            params[files_key] = files[files_key]
+            del files[files_key]
+        if files != {}:
             return self._api_request(method, _rectify(params), files, **kwargs)
+        else:
+            return self._api_request(method, _rectify(params), **kwargs)
 
     def getMe(self):
         """ See: https://core.telegram.org/bots/api#getme """
@@ -536,9 +537,12 @@ class Bot(_BotBase):
               filename is a unicode string.
         """
         p = _strip(locals(), more=['photo'])
-        return self._api_request_with_file('sendPhoto', _rectify(p), 'photo', photo)
+        files = {'photo': photo}
+        files_key = 'photo'
+        return self._api_request_with_file('sendPhoto', _rectify(p), files_key, files)
 
     def sendAudio(self, chat_id, audio,
+                  thumb=None,
                   caption=None,
                   parse_mode=None,
                   duration=None,
@@ -552,24 +556,32 @@ class Bot(_BotBase):
 
         :param audio: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
         """
-        p = _strip(locals(), more=['audio'])
-        return self._api_request_with_file('sendAudio', _rectify(p), 'audio', audio)
+        p = _strip(locals(), more=['thumb'])
+        files_key = 'audio'
+        files = {files_key: audio}
+        if thumb != None: files['thumb'] = thumb 
+        return self._api_request_with_file('sendAudio', _rectify(p), files_key, files)
 
     def sendDocument(self, chat_id, document,
-                     caption=None,
-                     parse_mode=None,
-                     disable_notification=None,
-                     reply_to_message_id=None,
-                     reply_markup=None):
+                  thumb=None,
+                  caption=None,
+                  parse_mode=None,
+                  disable_notification=None,
+                  reply_to_message_id=None,
+                  reply_markup=None):
         """
         See: https://core.telegram.org/bots/api#senddocument
 
         :param document: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
         """
-        p = _strip(locals(), more=['document'])
-        return self._api_request_with_file('sendDocument', _rectify(p), 'document', document)
+        p = _strip(locals(), more=['thumb'])
+        files_key = 'document'
+        files = {files_key: document} 
+        if thumb != None: files['thumb'] = thumb
+        return self._api_request_with_file('sendDocument', _rectify(p), files_key, files)
 
     def sendVideo(self, chat_id, video,
+                  thumb=None,
                   duration=None,
                   width=None,
                   height=None,
@@ -584,8 +596,32 @@ class Bot(_BotBase):
 
         :param video: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
         """
-        p = _strip(locals(), more=['video'])
-        return self._api_request_with_file('sendVideo', _rectify(p), 'video', video)
+        p = _strip(locals(), more=['thumb'])
+        files_key = 'video'
+        files = {files_key: video} 
+        if thumb != None: files['thumb'] = thumb
+        return self._api_request_with_file('sendVideo', _rectify(p), files_key, files)
+
+    def sendAnimation(self, chat_id, animation,
+                  thumb=None,
+                  duration=None,
+                  width=None,
+                  height=None,
+                  caption=None,
+                  parse_mode=None,
+                  disable_notification=None,
+                  reply_to_message_id=None,
+                  reply_markup=None):
+        """
+        See: https://core.telegram.org/bots/api#sendvideo
+
+        :param video: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
+        """
+        p = _strip(locals(), more=['thumb'])
+        files_key = 'animation'
+        files = {files_key: animation} 
+        if thumb != None: files['thumb'] = thumb
+        return self._api_request_with_file('sendAnimation', _rectify(p), files_key, files)
 
     def sendVoice(self, chat_id, voice,
                   caption=None,
@@ -600,14 +636,16 @@ class Bot(_BotBase):
         :param voice: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
         """
         p = _strip(locals(), more=['voice'])
-        return self._api_request_with_file('sendVoice', _rectify(p), 'voice', voice)
+        files = {'voice': voice} 
+        return self._api_request_with_file('sendVoice', _rectify(p), files_key, files)
 
     def sendVideoNote(self, chat_id, video_note,
-                      duration=None,
-                      length=None,
-                      disable_notification=None,
-                      reply_to_message_id=None,
-                      reply_markup=None):
+                  thumb=None,
+                  duration=None,
+                  length=None,
+                  disable_notification=None,
+                  reply_to_message_id=None,
+                  reply_markup=None):
         """
         See: https://core.telegram.org/bots/api#sendvideonote
 
@@ -618,8 +656,10 @@ class Bot(_BotBase):
             it being specified. Supply any integer you want. It seems to have no effect
             on the video note's display size.
         """
-        p = _strip(locals(), more=['video_note'])
-        return self._api_request_with_file('sendVideoNote', _rectify(p), 'video_note', video_note)
+        p = _strip(locals(), more=['thumb'])
+        files = {'video_note': video_note} 
+        if thumb != None: files['thumb'] = thumb
+        return self._api_request_with_file('sendVideoNote', _rectify(p), files_key, files)
 
     def sendMediaGroup(self, chat_id, media,
                        disable_notification=None,
@@ -784,6 +824,7 @@ class Bot(_BotBase):
     def setChatPhoto(self, chat_id, photo):
         """ See: https://core.telegram.org/bots/api#setchatphoto """
         p = _strip(locals(), more=['photo'])
+        files = {'photo': photo}
         return self._api_request_with_file('setChatPhoto', _rectify(p), 'photo', photo)
 
     def deleteChatPhoto(self, chat_id):
@@ -933,7 +974,9 @@ class Bot(_BotBase):
         :param sticker: Same as ``photo`` in :meth:`telepot.Bot.sendPhoto`
         """
         p = _strip(locals(), more=['sticker'])
-        return self._api_request_with_file('sendSticker', _rectify(p), 'sticker', sticker)
+        files_key = 'sticker'
+        files = {files_key: sticker}
+        return self._api_request_with_file('sendSticker', _rectify(p), files_key, files)
 
     def getStickerSet(self, name):
         """
@@ -947,7 +990,9 @@ class Bot(_BotBase):
         See: https://core.telegram.org/bots/api#uploadstickerfile
         """
         p = _strip(locals(), more=['png_sticker'])
-        return self._api_request_with_file('uploadStickerFile', _rectify(p), 'png_sticker', png_sticker)
+        files_key = 'png_sticker'
+        files = {files_key: png_sticker}
+        return self._api_request_with_file('uploadStickerFile', _rectify(p), files_key, files)
 
     def createNewStickerSet(self, user_id, name, title, png_sticker, emojis,
                             contains_masks=None,
@@ -956,7 +1001,9 @@ class Bot(_BotBase):
         See: https://core.telegram.org/bots/api#createnewstickerset
         """
         p = _strip(locals(), more=['png_sticker'])
-        return self._api_request_with_file('createNewStickerSet', _rectify(p), 'png_sticker', png_sticker)
+        files_key = 'png_sticker'
+        files = {files_key: png_sticker}
+        return self._api_request_with_file('createNewStickerSet', _rectify(p), files_key, files)
 
     def addStickerToSet(self, user_id, name, png_sticker, emojis,
                         mask_position=None):
@@ -964,7 +1011,9 @@ class Bot(_BotBase):
         See: https://core.telegram.org/bots/api#addstickertoset
         """
         p = _strip(locals(), more=['png_sticker'])
-        return self._api_request_with_file('addStickerToSet', _rectify(p), 'png_sticker', png_sticker)
+        files_key = 'png_sticker'
+        files = {files_key: png_sticker}
+        return self._api_request_with_file('addStickerToSet', _rectify(p), files_key, files)
 
     def setStickerPositionInSet(self, sticker, position):
         """
